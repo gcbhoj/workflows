@@ -7,30 +7,25 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-  auto-merge:
+  merge-master-to-main:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Create Pull Request
-        id: cpr
-        uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          base: main
-          head: master
-          title: "Auto PR: master → main"
-          body: "Automated PR from master to main"
-          branch: auto-pr-master-to-main
+          fetch-depth: 0   # required for full git history
 
-      - name: Enable Auto Merge
-        if: steps.cpr.outputs.pull-request-number != ''
-        run: gh pr merge --auto --merge $PR_NUMBER
-        env:
-          PR_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Merge master into main
+        run: |
+          git fetch origin
+          git checkout main
+          git merge origin/master --no-edit
+          git push origin main
